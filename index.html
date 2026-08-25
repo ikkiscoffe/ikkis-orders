@@ -1,0 +1,1921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>IKKIS KOT v3.2 — Order Entry</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FFF2E3;
+    --paper:#FAF7F2;
+    --warm:#FFF5EB;
+    --ink:#1A1A1A;
+    --near:#121212;
+    --brown:#1E1208;
+    --copper:#B95E2C;
+    --copper-dark:#944719;
+    --blue:#718F98;
+    --line:#D8C9B5;
+    --line-dark:#BBA991;
+    --muted:#75695E;
+    --green:#2F7D4D;
+    --yellow:#9B731D;
+    --red:#A83232;
+    --shadow:0 18px 42px rgba(30,18,8,.08);
+    --mono:'IBM Plex Mono', monospace;
+    --sans:'Inter', sans-serif;
+    --serif:'Cormorant Garamond', serif;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+  body{
+    background:
+      radial-gradient(circle at top left, rgba(185,94,44,.10), transparent 30rem),
+      linear-gradient(180deg,var(--cream),var(--paper));
+    color:var(--brown);
+    font-family:var(--sans);
+    min-height:100vh;
+    padding:26px 16px 90px;
+  }
+
+  .shell{max-width:980px;margin:0 auto}
+
+  .topbar{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:20px;
+    align-items:end;
+    border-bottom:2px solid var(--brown);
+    padding-bottom:20px;
+    margin-bottom:22px;
+  }
+  .brand-lockup{
+    display:block;
+    max-width:620px;
+  }
+  .brand-logo{
+    width:clamp(320px,48vw,560px);
+    height:auto;
+    max-height:126px;
+    object-fit:contain;
+    display:block;
+  }
+  .brand-logo.is-hidden{display:none}
+  .brand p{
+    margin-top:12px;
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:.26em;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
+  .status-pill{
+    border:1px solid var(--line-dark);
+    padding:12px 14px;
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--muted);
+    min-width:190px;
+    text-align:right;
+    background:rgba(255,255,255,.32);
+  }
+  .status-pill strong{display:block;color:var(--brown);font-size:13px;margin-bottom:4px}
+  .status-pill.ok strong{color:var(--green)}
+  .status-pill.err strong{color:var(--red)}
+
+  .grid{display:grid;grid-template-columns:1.08fr .62fr;gap:24px;align-items:start}
+  .card{border:1px solid var(--line);background:rgba(255,255,255,.34);box-shadow:var(--shadow)}
+  .card-pad{padding:24px}
+  .side{position:sticky;top:18px}
+
+  .section{margin-bottom:28px}
+  .section:last-child{margin-bottom:0}
+  .section-title{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--copper);
+    margin-bottom:18px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .section-title::after{content:"";height:1px;background:var(--line);flex:1}
+
+  /* Compact connection panel */
+  .connection-strip{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    border:1px solid var(--line-dark);
+    background:rgba(255,255,255,.45);
+    padding:11px 13px;
+    margin-bottom:18px;
+    cursor:pointer;
+  }
+  .connection-strip .left{min-width:0}
+  .connection-strip .k{font-family:var(--mono);font-size:9px;letter-spacing:.20em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .connection-strip .v{font-family:var(--mono);font-size:12px;color:var(--brown);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:650px}
+  .connection-strip .toggle{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--copper);white-space:nowrap}
+  .script-box{
+    display:none;
+    grid-template-columns:1fr auto auto;
+    gap:10px;
+    border:1px solid var(--line-dark);
+    background:rgba(255,255,255,.45);
+    padding:10px;
+    margin:0 0 18px;
+  }
+  .script-box.open{display:grid}
+  .script-box input{border:none;background:transparent;outline:none;font-family:var(--mono);font-size:12px;color:var(--brown);min-width:0}
+
+  button,input,select,textarea{font-family:inherit}
+  .mini-btn{
+    border:1px solid var(--line-dark);
+    background:transparent;
+    color:var(--brown);
+    padding:9px 12px;
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    transition:.15s ease;
+    min-height:36px;
+  }
+  .mini-btn:hover{border-color:var(--copper);color:var(--copper)}
+  .mini-btn:disabled{opacity:.5;cursor:not-allowed}
+  .mini-btn.primary{background:var(--brown);color:var(--cream);border-color:var(--brown)}
+  .mini-btn.primary:hover{background:var(--copper);border-color:var(--copper);color:#fff}
+
+  .source-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .source-btn{
+    border:1px solid var(--line-dark);
+    background:rgba(255,255,255,.24);
+    min-height:86px;
+    padding:15px 10px;
+    cursor:pointer;
+    text-align:center;
+    transition:.16s ease;
+  }
+  .source-btn:hover{transform:translateY(-1px);border-color:var(--brown)}
+  .source-btn.active{background:var(--brown);color:var(--cream);border-color:var(--brown)}
+  .source-code{font-family:var(--mono);font-weight:600;font-size:24px;display:block;margin-bottom:8px;color:var(--copper)}
+  .source-btn.active .source-code{color:var(--cream)}
+  .source-label{font-family:var(--mono);font-size:9px;line-height:1.45;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .source-btn.active .source-label{color:rgba(255,242,227,.76)}
+
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  .row-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .field{margin-bottom:18px;position:relative}
+  label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  label .req{color:var(--copper)}
+  input,select,textarea{
+    width:100%;
+    border:none;
+    border-bottom:1.5px solid var(--brown);
+    background:transparent;
+    color:var(--brown);
+    outline:none;
+    border-radius:0;
+    padding:8px 0 11px;
+    font-size:16px;
+  }
+  textarea{resize:vertical;min-height:54px;line-height:1.45}
+  input:focus,select:focus,textarea:focus{border-bottom-color:var(--copper)}
+  input::placeholder{color:#B7A996}
+  select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 14px) 50%,calc(100% - 9px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:25px}
+
+  .hint{font-size:12px;line-height:1.5;color:var(--muted);margin-top:8px}
+  .hint code{background:rgba(255,255,255,.5);padding:1px 5px;font-family:var(--mono);font-size:11px}
+
+  .suggestions{
+    position:absolute;
+    left:0;right:0;top:100%;
+    z-index:25;
+    background:#FAF7F2;
+    border:1px solid var(--line-dark);
+    box-shadow:0 14px 34px rgba(30,18,8,.12);
+    max-height:210px;
+    overflow:auto;
+    display:none;
+  }
+  .suggestions.open{display:block}
+  .suggestion-item{
+    padding:11px 13px;
+    font-family:var(--mono);
+    font-size:13px;
+    border-bottom:1px solid #EEE2D1;
+    cursor:pointer;
+  }
+  .suggestion-item:hover,.suggestion-item.active{background:#F1E5D6;color:var(--copper)}
+  .suggestion-item:last-child{border-bottom:0}
+
+  .b2b-panel{display:none;border:1px solid var(--line);background:rgba(113,143,152,.10);padding:18px;margin-top:16px}
+  .b2b-panel.visible{display:block}
+
+  .shopify-panel{
+    display:none;
+    border:1px solid var(--line);
+    background:rgba(185,94,44,.07);
+    padding:16px;
+    margin:0 0 18px;
+  }
+  .shopify-panel.visible{display:block}
+  .credit-box{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+  .credit-stat{border:1px solid var(--line);background:rgba(255,255,255,.5);padding:12px 10px}
+  .credit-stat .v{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--brown)}
+  .credit-stat .k{font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:.16em;color:var(--muted);margin-top:5px}
+  .credit-status{grid-column:1/-1;padding:12px 14px;border:1px solid var(--line-dark);font-family:var(--mono);font-size:12px;letter-spacing:.04em}
+  .credit-status.green{background:rgba(47,125,77,.10);color:var(--green);border-color:rgba(47,125,77,.30)}
+  .credit-status.yellow{background:rgba(155,115,29,.12);color:var(--yellow);border-color:rgba(155,115,29,.34)}
+  .credit-status.red{background:rgba(168,50,50,.11);color:var(--red);border-color:rgba(168,50,50,.36)}
+
+  .add-cafe{display:none;margin-top:16px;border-top:1px solid var(--line);padding-top:16px;background:rgba(255,255,255,.4);padding:18px;margin-left:-18px;margin-right:-18px;margin-bottom:-18px}
+  .add-cafe.visible{display:block}
+  .add-cafe-title{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--copper);margin-bottom:14px}
+
+  .order-id{background:var(--brown);color:var(--cream);padding:18px 20px;display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:20px}
+  .order-id .small{font-family:var(--mono);font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,242,227,.45);margin-bottom:6px}
+  .order-id .id{font-family:var(--mono);font-size:18px;font-weight:600;letter-spacing:.04em}
+  .order-id .note{font-family:var(--mono);font-size:10px;line-height:1.45;color:rgba(255,242,227,.46);text-align:right}
+
+  .urgent{display:inline-flex;align-items:center;gap:10px;border:none;background:transparent;color:var(--muted);font-family:var(--mono);font-size:11px;letter-spacing:.17em;text-transform:uppercase;cursor:pointer;padding:8px 0}
+  .checkbox{width:18px;height:18px;border:1.5px solid var(--line-dark);display:grid;place-items:center;color:#fff}
+  .urgent.active{color:var(--copper)}
+  .urgent.active .checkbox{background:var(--copper);border-color:var(--copper)}
+  .shipping-row{
+    margin-top:14px;
+    padding:14px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.36);
+  }
+  .shipping-row .field{margin-bottom:0}
+  .shipping-toggle{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    border:none;
+    background:transparent;
+    color:var(--muted);
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.17em;
+    text-transform:uppercase;
+    cursor:pointer;
+    padding:8px 0;
+  }
+  .shipping-toggle.active{color:var(--copper)}
+  .shipping-toggle.active .checkbox{background:var(--copper);border-color:var(--copper)}
+  .shipping-field input:disabled{opacity:.55;cursor:not-allowed}
+
+  /* B2B per-KOT amount control */
+  .b2b-limit-box{
+    margin-top:14px;
+    padding:16px;
+    border:1px solid var(--line-dark);
+    background:rgba(255,255,255,.48);
+    transition:.16s ease;
+  }
+  .b2b-limit-box.over{
+    border-color:rgba(168,50,50,.42);
+    background:rgba(168,50,50,.055);
+  }
+  .b2b-limit-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:14px;
+  }
+  .b2b-limit-k{
+    font-family:var(--mono);
+    font-size:8px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:5px;
+  }
+  .b2b-limit-v{
+    font-family:var(--mono);
+    font-size:16px;
+    font-weight:600;
+    color:var(--brown);
+  }
+  .b2b-limit-badge{
+    border:1px solid rgba(47,125,77,.32);
+    background:rgba(47,125,77,.09);
+    color:var(--green);
+    padding:7px 9px;
+    font-family:var(--mono);
+    font-size:8px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    white-space:nowrap;
+  }
+  .b2b-limit-badge.over{
+    border-color:rgba(168,50,50,.34);
+    background:rgba(168,50,50,.09);
+    color:var(--red);
+  }
+  .b2b-limit-track{
+    height:5px;
+    margin-top:12px;
+    background:rgba(30,18,8,.10);
+    overflow:hidden;
+  }
+  .b2b-limit-track span{
+    display:block;
+    height:100%;
+    width:0%;
+    background:var(--green);
+    transition:width .18s ease, background .18s ease;
+  }
+  .b2b-limit-box.over .b2b-limit-track span{background:var(--red)}
+  .b2b-limit-message{
+    margin-top:10px;
+    font-size:12px;
+    line-height:1.55;
+    color:var(--muted);
+  }
+  .b2b-over-options{
+    display:none;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:14px;
+  }
+  .b2b-over-options.visible{display:grid}
+  .limit-choice{
+    border:1px solid var(--line-dark);
+    background:rgba(255,255,255,.56);
+    color:var(--brown);
+    padding:14px;
+    cursor:pointer;
+    text-align:left;
+    min-height:112px;
+    transition:.15s ease;
+  }
+  .limit-choice:hover{border-color:var(--copper);transform:translateY(-1px)}
+  .limit-choice.active{
+    border-color:var(--copper);
+    box-shadow:inset 0 0 0 1px var(--copper);
+    background:rgba(185,94,44,.08);
+  }
+  .limit-choice-title{
+    display:block;
+    font-family:var(--mono);
+    font-size:10px;
+    font-weight:600;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    margin-bottom:7px;
+  }
+  .limit-choice-copy{
+    display:block;
+    font-size:11px;
+    line-height:1.5;
+    color:var(--muted);
+  }
+  .b2b-limit-selection{
+    display:none;
+    margin-top:10px;
+    padding:10px 11px;
+    border:1px solid var(--line);
+    font-family:var(--mono);
+    font-size:10px;
+    line-height:1.5;
+  }
+  .b2b-limit-selection.visible{display:block}
+  .b2b-limit-selection.split{color:var(--yellow);background:rgba(155,115,29,.08)}
+  .b2b-limit-selection.eway{color:var(--copper-dark);background:rgba(185,94,44,.08)}
+
+  .items{display:flex;flex-direction:column;gap:12px}
+  .item{border:1px solid var(--line);background:rgba(255,255,255,.36);padding:18px}
+  .item-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+  .item-title{font-family:var(--mono);font-size:10px;letter-spacing:.20em;text-transform:uppercase;color:var(--muted)}
+  .remove{border:none;background:transparent;color:var(--muted);font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+  .remove:hover{color:var(--red)}
+  .item-grid{display:grid;grid-template-columns:1.55fr .7fr .7fr;gap:14px}
+  .item-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:14px}
+  .price-field{display:none}
+  .is-b2b .price-field{display:block}
+  .price-field input{font-weight:600}
+  .price-auto-tag{display:inline-block;font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:var(--green);margin-left:6px;text-transform:uppercase}
+
+  .add-item{width:100%;border:1.5px dashed var(--line-dark);background:transparent;color:var(--muted);padding:17px;margin-top:14px;font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;cursor:pointer}
+  .add-item:hover{color:var(--copper);border-color:var(--copper)}
+
+  .summary-card{background:var(--brown);color:var(--cream);padding:22px;margin-bottom:18px}
+  .summary-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:18px}
+  .summary-title{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,242,227,.55)}
+  .summary-id{font-family:var(--mono);font-size:15px;line-height:1.35;margin-top:6px;word-break:break-all}
+  .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .sum-box{border:1px solid rgba(255,242,227,.18);padding:12px}
+  .sum-box .v{font-family:var(--mono);font-size:18px;font-weight:600}
+  .sum-box .k{font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:.18em;color:rgba(255,242,227,.45);margin-top:5px}
+
+  .submit{width:100%;background:var(--copper);border:none;color:#fff;padding:19px 18px;cursor:pointer;font-family:var(--mono);font-weight:600;font-size:12px;letter-spacing:.28em;text-transform:uppercase;transition:.15s ease}
+  .submit:hover{background:var(--copper-dark)}
+  .submit:disabled{opacity:.48;cursor:not-allowed}
+  .secondary-submit{background:transparent;color:var(--brown);border:1px solid var(--line-dark);margin-top:10px}
+  .secondary-submit:hover{background:rgba(30,18,8,.05)}
+
+  .toast{position:fixed;right:22px;bottom:22px;background:var(--brown);color:#fff;padding:14px 18px;max-width:360px;font-family:var(--mono);font-size:12px;line-height:1.5;opacity:0;transform:translateY(10px);transition:.2s ease;z-index:50}
+  .toast.show{opacity:1;transform:translateY(0)}
+  .toast.ok{background:var(--green)}
+  .toast.err{background:var(--red)}
+  .toast.warn{background:var(--yellow);color:#fff}
+  .spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:-2px}
+  .spinner-dark{border-color:rgba(30,18,8,.25);border-top-color:var(--brown)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .diag{margin-top:12px;padding:11px;background:rgba(30,18,8,.05);border:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--brown);max-height:120px;overflow-y:auto;display:none}
+  .diag.visible{display:block}.diag-line{margin:2px 0}.diag-line.err{color:var(--red)}.diag-line.ok{color:var(--green)}
+
+
+  .history-list{display:flex;flex-direction:column;gap:9px;margin-top:12px}
+  .history-item{
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.55);
+    padding:12px;
+    cursor:pointer;
+    transition:.15s ease;
+  }
+  .history-item:hover{border-color:var(--copper);transform:translateY(-1px)}
+  .history-item .h-main{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--brown);line-height:1.45}
+  .history-item .h-meta{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:6px;line-height:1.45}
+  .history-empty{font-family:var(--mono);font-size:11px;color:var(--muted);padding:10px 0}
+
+
+  /* Recovery Center */
+  .recovery-launch{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    border:1px solid var(--line-dark);
+    background:rgba(185,94,44,.055);
+    padding:12px 13px;
+    margin:0 0 18px;
+  }
+  .recovery-launch .copy{
+    min-width:0;
+  }
+  .recovery-launch .k{
+    font-family:var(--mono);
+    font-size:9px;
+    letter-spacing:.20em;
+    text-transform:uppercase;
+    color:var(--copper);
+    margin-bottom:4px;
+  }
+  .recovery-launch .v{
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.45;
+  }
+  .recovery-panel{
+    display:none;
+    border:1px solid var(--line-dark);
+    background:rgba(255,255,255,.62);
+    padding:16px;
+    margin:0 0 20px;
+  }
+  .recovery-panel.visible{display:block}
+  .recovery-search{
+    display:grid;
+    grid-template-columns:1fr auto auto;
+    gap:9px;
+    align-items:end;
+  }
+  .recovery-search .field{margin-bottom:0}
+  .recovery-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-top:14px;
+  }
+  .recovery-item{
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.72);
+    padding:14px;
+  }
+  .recovery-head{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    align-items:flex-start;
+  }
+  .recovery-type{
+    font-family:var(--mono);
+    font-size:8px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--copper);
+    margin-bottom:5px;
+  }
+  .recovery-id{
+    font-family:var(--mono);
+    font-size:13px;
+    font-weight:600;
+    color:var(--brown);
+    line-height:1.4;
+  }
+  .recovery-amount{
+    font-family:var(--mono);
+    font-size:13px;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .recovery-meta{
+    margin-top:8px;
+    color:var(--muted);
+    font-size:11px;
+    line-height:1.55;
+  }
+  .recovery-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+    margin-top:12px;
+  }
+  .recovery-actions .mini-btn{
+    flex:0 0 auto;
+  }
+  .recovery-empty{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--muted);
+    padding:12px 0 2px;
+  }
+
+  @media(max-width:620px){
+    .recovery-launch{
+      align-items:flex-start;
+      padding:11px;
+    }
+    .recovery-search{
+      grid-template-columns:1fr;
+    }
+    .recovery-actions .mini-btn{
+      flex:1 1 100%;
+    }
+  }
+
+  @media(max-width:860px){
+    .grid{grid-template-columns:1fr}.side{position:static}.topbar{grid-template-columns:1fr}.status-pill{text-align:left}
+  }
+
+  @media(max-width:620px){
+    body{
+      padding:12px 10px 34px;
+      overflow-x:hidden;
+    }
+    .shell{max-width:100%;overflow-x:hidden}
+
+    .topbar{
+      display:block;
+      gap:0;
+      margin-bottom:14px;
+      padding-bottom:14px;
+    }
+    .brand-lockup{
+      max-width:100%;
+    }
+    .brand-logo{
+  width:min(82vw,360px);
+  height:auto;
+  max-height:82px;
+  transform: translateX(-70px);
+}
+    .brand p{
+      margin-top:10px;
+      font-size:8px;
+      letter-spacing:.18em;
+    }
+    .status-pill{
+      display:none;
+    }
+
+    .grid{
+      display:block;
+    }
+    .card-pad{padding:13px}
+    .card{box-shadow:none}
+
+    .connection-strip{
+      padding:9px 10px;
+      margin-bottom:13px;
+    }
+    .connection-strip .k{font-size:8px}
+    .connection-strip .v{
+      max-width:245px;
+      font-size:9px;
+    }
+    .connection-strip .toggle{font-size:9px}
+    .script-box{
+      grid-template-columns:1fr;
+      margin-bottom:14px;
+    }
+    .script-box input{
+      font-size:11px;
+      line-height:1.4;
+    }
+
+    .section{margin-bottom:22px}
+    .section-title{
+      font-size:9px;
+      margin-bottom:12px;
+      letter-spacing:.16em;
+    }
+
+    .source-grid{
+      grid-template-columns:repeat(2,1fr);
+      gap:6px;
+    }
+    .source-btn{
+      min-height:70px;
+      padding:10px 4px;
+    }
+    .source-code{
+      font-size:20px;
+      margin-bottom:5px;
+    }
+    .source-label{
+      font-size:6.8px;
+      letter-spacing:.08em;
+      line-height:1.45;
+    }
+
+    .row,.row-3,.item-grid,.item-grid-3,.credit-box{
+      grid-template-columns:1fr;
+      gap:10px;
+    }
+    .field{margin-bottom:13px}
+    label{
+      font-size:8.5px;
+      letter-spacing:.14em;
+    }
+    input,select,textarea{
+      font-size:16px;
+      padding:7px 0 10px;
+    }
+
+    .b2b-panel{
+      padding:12px;
+      margin-top:12px;
+    }
+    .shipping-row{
+      padding:12px;
+      margin-top:10px;
+    }
+    .b2b-limit-box{padding:12px;margin-top:10px}
+    .b2b-limit-head{gap:8px}
+    .b2b-limit-v{font-size:14px}
+    .b2b-limit-badge{font-size:7px;padding:6px 7px}
+    .b2b-over-options{grid-template-columns:1fr;gap:8px}
+    .limit-choice{min-height:0;padding:12px}
+    .add-cafe{
+      margin-left:-12px;
+      margin-right:-12px;
+      margin-bottom:-12px;
+      padding:14px;
+    }
+    .credit-box{gap:7px}
+    .credit-stat{padding:10px}
+    .credit-status{
+      font-size:10.5px;
+      padding:10px;
+    }
+
+    .order-id{
+      padding:14px 14px;
+      margin-bottom:15px;
+    }
+    .order-id .id{font-size:14px}
+    .order-id .note{font-size:8px}
+
+    .item{padding:12px}
+    .item-grid-3{margin-top:8px}
+    .item-head{margin-bottom:10px}
+    .add-item{
+      padding:14px;
+      margin-top:10px;
+    }
+
+    .side{
+      position:static;
+      margin-top:14px;
+      padding:0;
+      background:transparent;
+      border-top:0;
+      backdrop-filter:none;
+      z-index:auto;
+    }
+    .summary-card{
+      display:block;
+      padding:16px;
+      margin-bottom:12px;
+    }
+    .summary-grid{
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+    }
+    .submit{
+      padding:16px 12px;
+      font-size:11px;
+    }
+    .secondary-submit{display:block}
+    .hint[style]{display:block;font-size:11px}
+    .toast{
+      left:10px;
+      right:10px;
+      bottom:18px;
+      max-width:none;
+    }
+    .diag{
+      max-height:86px;
+      font-size:10px;
+    }
+    .row-actions .mini-btn{flex:1}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-lockup">
+        <img class="brand-logo" src="ikkis-logo.png" alt="IKKIS Coffee Roasters logo" onerror="this.classList.add('is-hidden')" />
+      </div>
+      <p>KOT v3.2 · Order Entry System</p>
+    </div>
+    <div class="status-pill" id="connectionStatus"><strong>Connected</strong>IKKIS KOT v3.2 ready</div>
+  </header>
+
+  <div class="grid">
+    <main class="card card-pad" id="formCard">
+      <div class="connection-strip" onclick="toggleSettings()">
+        <div class="left">
+          <div class="k">System URL</div>
+          <div class="v" id="urlPreview">Internal Web App URL saved</div>
+        </div>
+        <div class="toggle" id="settingsToggle">Settings</div>
+      </div>
+      <div class="script-box" id="scriptBox">
+        <input id="webAppUrl" placeholder="Google Apps Script Web App URL …/exec" />
+        <button class="mini-btn" onclick="saveUrl()">Save</button>
+        <button class="mini-btn" id="testBtn" onclick="testConnection()">Test</button>
+      </div>
+      <div class="diag" id="diag"></div>
+
+      <div class="recovery-launch">
+        <div class="copy">
+          <div class="k">Recovery Center</div>
+          <div class="v">Re-push a saved notification or slip without creating a duplicate order, ledger debit, SO/PL, or invoice.</div>
+        </div>
+        <button class="mini-btn primary" onclick="toggleRecoveryCenter()" type="button">Open Recovery</button>
+      </div>
+
+      <div class="recovery-panel" id="recoveryPanel">
+        <div class="section-title" style="margin-bottom:12px">Recovery · Saved Orders</div>
+        <div class="hint" style="margin-bottom:13px">
+          Search by KOT ID, café/customer, SO/PL, invoice, or Document ID. “Reprint KOT” first tries to copy the exact old PDF back into the print queue; it rebuilds only if the old PDF is missing.
+        </div>
+
+        <div class="recovery-search">
+          <div class="field">
+            <label>Find Existing Order / Document</label>
+            <input id="recoveryQuery" placeholder="e.g. B-260825-021, SO-00210, café, invoice…" onkeydown="if(event.key==='Enter'){event.preventDefault();loadRecoveryOrders(true)}" />
+          </div>
+          <button class="mini-btn primary" id="recoverySearchBtn" onclick="loadRecoveryOrders(true)" type="button">Search</button>
+          <button class="mini-btn" id="recoveryRecentBtn" onclick="loadRecoveryOrders(false)" type="button">Recent</button>
+        </div>
+
+        <div class="recovery-list" id="recoveryList">
+          <div class="recovery-empty">Search an order or click Recent.</div>
+        </div>
+
+        <div class="row-actions" style="margin-top:12px">
+          <button class="mini-btn" onclick="toggleRecoveryCenter()" type="button">Close Recovery</button>
+        </div>
+      </div>
+
+
+      <section class="section">
+        <div class="section-title">1 · Source</div>
+        <div class="source-grid">
+          <button class="source-btn" id="sourceS" onclick="selectSource('S')" type="button"><span class="source-code">S</span><span class="source-label">Shopify<br>B2C</span></button>
+          <button class="source-btn" id="sourceW" onclick="selectSource('W')" type="button"><span class="source-code">W</span><span class="source-label">WhatsApp / Phone<br>B2C</span></button>
+          <button class="source-btn" id="sourceB" onclick="selectSource('B')" type="button"><span class="source-code">B</span><span class="source-label">B2B<br>Wholesale</span></button>
+          <button class="source-btn" id="sourceD" onclick="selectSource('D')" type="button"><span class="source-code">D</span><span class="source-label">Document<br>No KOT</span></button>
+        </div>
+
+        <div class="b2b-panel" id="b2bPanel">
+          <div class="row">
+            <div class="field">
+              <label>Café Account <span class="req">*</span></label>
+              <select id="cafeSelect" onchange="onCafeSelected()"><option value="">Load cafés first…</option></select>
+            </div>
+            <div class="field">
+              <label>Manual Café / New Café</label>
+              <input id="manualCafeName" placeholder="Only if not in dropdown" oninput="onManualCafeInput()" />
+            </div>
+          </div>
+          <div class="row-actions">
+            <button class="mini-btn" id="loadCafesBtn" onclick="loadCafes(true)" type="button">Load Cafés</button>
+            <button class="mini-btn" id="addCafeToggleBtn" onclick="toggleAddCafe()" type="button">+ Add Café</button>
+            <button class="mini-btn" id="refreshCreditBtn" onclick="loadCredit(true)" type="button">Refresh Credit</button>
+            <button class="mini-btn primary" id="paymentToggleBtn" onclick="togglePaymentPanel()" type="button">Record Payment</button>
+            <button class="mini-btn" id="repeatLastBtn" onclick="repeatLastCafeOrder()" type="button">Repeat Last</button>
+            <button class="mini-btn" id="historyToggleBtn" onclick="toggleOrderHistoryPanel()" type="button">Order History</button>
+            <button class="mini-btn" id="adjustToggleBtn" onclick="toggleAdjustmentPanel()" type="button">Adjust Ledger</button>
+          </div>
+
+          <div class="row shipping-row">
+            <div class="field">
+              <label>Shipping</label>
+              <button class="shipping-toggle" id="shippingToggle" onclick="toggleShipping()" type="button"><span class="checkbox" id="shippingCheck"></span> Add Shipping</button>
+            </div>
+            <div class="field shipping-field">
+              <label>Shipping Charge ₹</label>
+              <input id="shippingCharge" type="number" min="0" step="1" value="0" placeholder="0" disabled oninput="updateShippingCharge()" onchange="updateShippingCharge()" />
+              <div class="hint">Added to B2B amount and café credit only when shipping is checked.</div>
+            </div>
+          </div>
+
+          <div class="b2b-limit-box" id="b2bLimitBox">
+            <div class="b2b-limit-head">
+              <div>
+                <div class="b2b-limit-k">Per-KOT Control</div>
+                <div class="b2b-limit-v" id="b2bLimitValue">Rs 0 / Rs 49,999</div>
+              </div>
+              <div class="b2b-limit-badge" id="b2bLimitBadge">Within Limit</div>
+            </div>
+            <div class="b2b-limit-track"><span id="b2bLimitProgress"></span></div>
+            <div class="b2b-limit-message" id="b2bLimitMessage">Normal B2B KOT can be submitted up to Rs 49,999 final amount, including shipping.</div>
+
+            <div class="b2b-over-options" id="b2bOverOptions">
+              <button class="limit-choice" id="splitKotChoice" onclick="setB2BLimitAction('SPLIT')" type="button">
+                <span class="limit-choice-title">Split Into More KOTs</span>
+                <span class="limit-choice-copy">Keep each normal KOT at Rs 49,999 or below. Reduce this ticket and create KOT 2 / KOT 3 as needed.</span>
+              </button>
+              <button class="limit-choice" id="ewayBillChoice" onclick="setB2BLimitAction('EWAY_BILL')" type="button">
+                <span class="limit-choice-title">E-Way Bill</span>
+                <span class="limit-choice-copy">Allow the full amount in one KOT. The order will be marked E-Way Bill Required · Pending until the number is recorded.</span>
+              </button>
+            </div>
+
+            <div class="b2b-limit-selection" id="b2bLimitSelection"></div>
+          </div>
+
+
+          <div class="add-cafe" id="orderHistoryPanel">
+            <div class="add-cafe-title">Repeat Previous Café Order</div>
+            <div class="hint" style="margin-bottom:14px">Select a previous order to copy products, bag sizes, grinds, quantities, rates, notes, and shipping. New KOT ID, SO/PI, invoice, ledger debit, submitted time, and dispatch date stay fresh.</div>
+            <div class="row-actions">
+              <button class="mini-btn primary" id="historyRefreshBtn" onclick="loadCafeOrderHistory(true)" type="button">Refresh History</button>
+              <button class="mini-btn" onclick="toggleOrderHistoryPanel()" type="button">Close</button>
+            </div>
+            <div class="history-list" id="orderHistoryList">
+              <div class="history-empty">Select a café and click Refresh History.</div>
+            </div>
+          </div>
+
+          <div class="add-cafe" id="paymentPanel">
+            <div class="add-cafe-title">Record Café Payment</div>
+            <div class="hint" style="margin-bottom:14px">Use this only when money is received from a café. It updates accounts/credit and does not create a KOT.</div>
+
+            <div class="row-3">
+              <div class="field">
+                <label>Amount Received <span class="req">*</span></label>
+                <input id="paymentAmount" type="number" min="1" placeholder="e.g. 25000" />
+              </div>
+
+              <div class="field">
+                <label>Mode</label>
+                <select id="paymentMode">
+                  <option>UPI</option>
+                  <option>Bank Transfer</option>
+                  <option>Cash</option>
+                  <option>Cheque</option>
+                  <option>Other</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Reference</label>
+                <input id="paymentReference" placeholder="UTR / cheque no. / internal ref" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Payment Notes</label>
+              <input id="paymentNotes" placeholder="Optional accounts note" />
+            </div>
+
+            <div class="row-actions">
+              <button class="mini-btn primary" id="savePaymentBtn" onclick="submitCafePayment()" type="button">Save Payment</button>
+              <button class="mini-btn" onclick="togglePaymentPanel()" type="button">Cancel</button>
+            </div>
+          </div>
+
+          <div class="add-cafe" id="adjustmentPanel">
+            <div class="add-cafe-title">Ledger Adjustment / Tally Reconciliation</div>
+            <div class="hint" style="margin-bottom:14px">Use only when the café outstanding needs a controlled correction. Do not type over Outstanding in the sheet.</div>
+            <div class="row-3">
+              <div class="field">
+                <label>Direction <span class="req">*</span></label>
+                <select id="adjustDirection">
+                  <option value="credit">Credit Adjustment — reduce outstanding</option>
+                  <option value="debit">Debit Adjustment — increase outstanding</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Amount ₹ <span class="req">*</span></label>
+                <input id="adjustAmount" type="number" min="1" placeholder="e.g. 2500" />
+              </div>
+              <div class="field">
+                <label>Reference</label>
+                <input id="adjustReference" placeholder="Tally / accountant ref" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Reason <span class="req">*</span></label>
+              <input id="adjustNotes" placeholder="e.g. Tally reconciliation, old invoice correction" />
+            </div>
+            <div class="row-actions">
+              <button class="mini-btn primary" id="saveAdjustBtn" onclick="submitLedgerAdjustment()" type="button">Save Adjustment</button>
+              <button class="mini-btn" onclick="toggleAdjustmentPanel()" type="button">Cancel</button>
+            </div>
+          </div>
+
+          <div class="add-cafe" id="addCafePanel">
+            <div class="add-cafe-title">Register New Café Partner</div>
+            <div class="row">
+              <div class="field"><label>Café Name <span class="req">*</span></label><input id="newCafeName" placeholder="e.g. Brew House"/></div>
+              <div class="field"><label>GST Entity</label><input id="newGstEntity" placeholder="Legal name"/></div>
+            </div>
+            <div class="row-3">
+              <div class="field"><label>City</label><input id="newCafeCity" placeholder="Chandigarh" oninput="showCitySuggestions(this,'newCitySuggest')" onfocus="showCitySuggestions(this,'newCitySuggest')" autocomplete="off"/><div class="suggestions" id="newCitySuggest"></div></div>
+              <div class="field"><label>Phone</label><input id="newCafePhone" placeholder="+91 …"/></div>
+              <div class="field"><label>Credit Limit</label><input id="newCreditLimit" type="number" value="75000" /></div>
+            </div>
+            <div class="row-3">
+              <div class="field"><label>Opening Balance</label><input id="newOpeningBalance" type="number" value="0" placeholder="Existing dues"/></div>
+              <div class="field"><label>Has GST</label><select id="newHasGst"><option>No</option><option>Yes</option></select></div>
+              <div class="field"><label>GST State</label><input id="newGstState" placeholder="Punjab / Chandigarh" /></div>
+            </div>
+            <div class="row-actions">
+              <button class="mini-btn primary" id="createCafeBtn" onclick="submitNewCafe()" type="button">Create Café</button>
+              <button class="mini-btn" onclick="toggleAddCafe()" type="button">Cancel</button>
+            </div>
+          </div>
+
+          <div class="credit-box" id="creditBox">
+            <div class="credit-stat"><div class="v" id="creditLimit">—</div><div class="k">Limit</div></div>
+            <div class="credit-stat"><div class="v" id="creditOutstanding">—</div><div class="k">Outstanding</div></div>
+            <div class="credit-stat"><div class="v" id="creditRemaining">—</div><div class="k">Remaining</div></div>
+            <div class="credit-stat"><div class="v" id="creditAfter">—</div><div class="k">After This Order</div></div>
+            <div class="credit-status" id="creditStatus">Select café to show credit status.</div>
+          </div>
+        </div>
+
+        <div class="b2b-panel" id="invoicePanel">
+          <div class="add-cafe-title">WhatsApp / Phone Invoice Route</div>
+          <div class="hint" style="margin-bottom:14px">Use this only when a WhatsApp / phone order also needs an invoice entry for accounts. The KOT still goes to production.</div>
+          <div class="row-3">
+            <div class="field">
+              <label>Invoice Required?</label>
+              <select id="invoiceRequired" onchange="updatePreview()">
+                <option>No</option>
+                <option>Yes</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>GST Route</label>
+              <select id="invoiceGstRoute">
+                <option>Punjab</option>
+                <option>Chandigarh</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Invoice Amount ₹</label>
+              <input id="invoiceAmount" type="number" min="0" step="1" placeholder="Total invoice amount" />
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label>Payment Status</label>
+              <select id="invoicePaymentStatus">
+                <option>Paid</option>
+                <option>Unpaid</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Invoice Notes</label>
+              <input id="invoiceNotes" placeholder="Optional accounts note" />
+            </div>
+          </div>
+        </div>
+
+        <div class="b2b-panel" id="documentOnlyPanel">
+          <div class="add-cafe-title">Document Only / Non-KOT Sale</div>
+          <div class="hint" style="margin-bottom:14px">For machine sales, equipment, manual invoices, or any accounting document that should not create a roasting KOT.</div>
+          <div class="row-3">
+            <div class="field">
+              <label>Document Type <span class="req">*</span></label>
+              <select id="docOnlyType">
+                <option>Machine Sale</option>
+                <option>Equipment Sale</option>
+                <option>Manual Invoice</option>
+                <option>Other Non-KOT Sale</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>GST Route <span class="req">*</span></label>
+              <select id="docOnlyGstRoute">
+                <option>Punjab</option>
+                <option>Chandigarh</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Amount ₹ <span class="req">*</span></label>
+              <input id="docOnlyAmount" type="number" min="1" step="1" placeholder="e.g. 65000" />
+            </div>
+          </div>
+          <div class="row-3">
+            <div class="field">
+              <label>Party Type</label>
+              <select id="docOnlyPartyType">
+                <option>Customer</option>
+                <option>Cafe</option>
+                <option>Vendor</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Payment Status</label>
+              <select id="docOnlyPaymentStatus">
+                <option>Unpaid</option>
+                <option>Paid</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Mode / Reference</label>
+              <input id="docOnlyReference" placeholder="UPI / UTR / cheque / internal ref" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Document Notes</label>
+            <input id="docOnlyNotes" placeholder="Machine model, serial no., remarks" />
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">2 · Customer Details</div>
+        <div class="order-id">
+          <div><div class="small">Order ID</div><div class="id" id="orderId">—</div></div>
+          <div class="note">Auto-generated<br/>before submit</div>
+        </div>
+
+        <div class="shopify-panel" id="shopifyPanel">
+          <div class="row">
+            <div class="field">
+              <label>Shopify Order # <span class="req">*</span></label>
+              <input id="shopifyOrderNumber" placeholder="e.g. #1878" oninput="updatePreview()" />
+            </div>
+            <div class="field">
+              <label>Manual Backup Mode</label>
+              <input value="Use only if auto-sync failed" disabled />
+            </div>
+          </div>
+          <div class="hint">For normal Shopify orders, the webhook makes KOT automatically. Use this field only when you manually recreate a missed Shopify order.</div>
+        </div>
+
+        <div class="field"><label id="customerLabel">Customer Name <span class="req">*</span></label><input id="customerName" placeholder="Customer / café name" oninput="updatePreview()" /></div>
+        <div class="row">
+          <div class="field"><label>City</label><input id="city" placeholder="Type Ch for Chandigarh" oninput="showCitySuggestions(this,'citySuggest');updatePreview()" onfocus="showCitySuggestions(this,'citySuggest')" autocomplete="off"/><div class="suggestions" id="citySuggest"></div></div>
+          <div class="field"><label>Phone / Notes</label><input id="phone" placeholder="Phone or internal note" oninput="updatePreview()" /></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Dispatch Date <span class="req">*</span></label><input id="dispatchDate" type="date" onchange="updatePreview()" /></div>
+          <div class="field"><label>Submitted</label><input id="submittedPreview" disabled /></div>
+        </div>
+        <button class="urgent" id="urgentBtn" onclick="toggleUrgent()" type="button"><span class="checkbox" id="urgentCheck"></span> Mark as urgent</button>
+      </section>
+
+      <section class="section">
+        <div class="section-title">3 · Items</div>
+        <div class="items" id="items"></div>
+        <button class="add-item" onclick="addItem()" type="button">+ Add Coffee Item</button>
+      </section>
+    </main>
+
+    <aside class="side">
+      <div class="summary-card">
+        <div class="summary-top">
+          <div><div class="summary-title">Current Ticket</div><div class="summary-id" id="summaryOrderId">—</div></div>
+          <div class="summary-title" id="summarySource">No source</div>
+        </div>
+        <div class="summary-grid">
+          <div class="sum-box"><div class="v" id="sumLines">0</div><div class="k">Lines</div></div>
+          <div class="sum-box"><div class="v" id="sumBags">0</div><div class="k">Bags</div></div>
+          <div class="sum-box"><div class="v" id="sumKg">0.00</div><div class="k">Kg</div></div>
+          <div class="sum-box"><div class="v" id="sumAmount">Rs 0</div><div class="k">Final Amount</div></div>
+        </div>
+      </div>
+      <button class="submit" id="submitBtn" onclick="submitOrder()">Generate Order Slip</button>
+      <button class="submit secondary-submit" onclick="resetForm()" type="button">Clear Form</button>
+      <p class="hint" style="margin-top:16px">B2B price/kg is used only for café credit calculation. It auto-fills from <strong>Cafe_Pricing</strong> when available.</p>
+    </aside>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+const INTERNAL_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxeRfy6mdn7SE_qVQeXgLtcggtRqAXG1m5DtPNRisdTs52Q9k6ktqqgGZ5dHhKmMkk6/exec';
+const B2B_KOT_MAX_AMOUNT = 49999;
+
+const DEFAULT_PRODUCTS = ['Cafe Arabica','Cafe Blend','Mulberry Melt','Berry Bliss','Golden Glow','Flavor Flight','Morning Mist','Citrus Cloak','Deep Desire','Orange Octave','House Espresso Blend','House Espresso Arabica','Cold Brew Roast','Cold Brew Liquid','Filter Blend','Classic Blend','Single Origin','Robusta','Custom'];
+const BAG_SIZES = ['250g','500g','1kg'];
+const GRINDS = ['Whole Beans','Turkish','Espresso (3.5)','Mokka Pot (5)','Home Espresso (4.5)','Aeropress (6)','Pour Over (12)','Chemex','French Press (15)','Drip Machine','Cold Brew (16)','Custom'];
+const INDIAN_CITIES = ['Chandigarh','Chennai','Coimbatore','Chandrapur','Chhindwara','Churu','Chitrakoot','Delhi','New Delhi','Gurgaon','Gurugram','Noida','Faridabad','Ghaziabad','Mumbai','Navi Mumbai','Thane','Pune','Bengaluru','Bangalore','Hyderabad','Kolkata','Ahmedabad','Surat','Vadodara','Rajkot','Jaipur','Jodhpur','Udaipur','Kota','Ajmer','Amritsar','Jalandhar','Ludhiana','Patiala','Mohali','Panchkula','Zirakpur','Kharar','Derabassi','Bathinda','Pathankot','Jammu','Dehradun','Haridwar','Rishikesh','Lucknow','Kanpur','Agra','Varanasi','Prayagraj','Meerut','Bareilly','Bhopal','Indore','Jabalpur','Gwalior','Raipur','Nagpur','Nashik','Aurangabad','Goa','Panaji','Kochi','Kozhikode','Thiruvananthapuram','Mysuru','Mangalore','Madurai','Coimbatore','Tiruchirappalli','Vijayawada','Visakhapatnam','Bhubaneswar','Guwahati','Ranchi','Patna','Shimla','Solan'];
+
+const state = { webAppUrl: localStorage.getItem('IKKIS_KOT_V2_URL') || INTERNAL_WEB_APP_URL, source:'', orderNo:null, orderId:'—', cafes:JSON.parse(localStorage.getItem('IKKIS_KOT_V2_CAFES')||'[]'), selectedCafe:null, cafePricing:{}, credit:null, urgent:false, shippingEnabled:false, shippingCharge:0, b2bLimitAction:'', orderHistory:[], recoveryOrders:[], items:[] };
+const $ = id => document.getElementById(id);
+
+function init(){
+  $('webAppUrl').value = state.webAppUrl;
+  $('urlPreview').textContent = state.webAppUrl.replace('https://script.google.com/macros/s/','').slice(0,48) + '…';
+  $('dispatchDate').min = new Date().toISOString().slice(0,10);
+  $('submittedPreview').value = formatDateTime(new Date());
+  addItem();
+  updateConnectionStatus();
+  renderCafeOptions();
+  updatePreview();
+  loadCafes(false);
+}
+document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('click', e => { if(!e.target.closest('.field')) closeAllSuggestions(); });
+
+function toggleSettings(){ $('scriptBox').classList.toggle('open'); $('settingsToggle').textContent = $('scriptBox').classList.contains('open') ? 'Hide' : 'Settings'; }
+function saveUrl(){ const url=$('webAppUrl').value.trim(); if(!url) return toast('Paste Web App URL first.','err'); state.webAppUrl=url; localStorage.setItem('IKKIS_KOT_V2_URL',url); $('urlPreview').textContent=url.replace('https://script.google.com/macros/s/','').slice(0,48)+'…'; updateConnectionStatus(); toast('Web App URL saved.','ok'); diag('URL saved','ok'); }
+function getUrl(){ const url=($('webAppUrl').value.trim()||state.webAppUrl||INTERNAL_WEB_APP_URL).trim(); if(!url) throw new Error('Missing Web App URL.'); return url; }
+function updateConnectionStatus(text,cls=''){ const el=$('connectionStatus'); el.className='status-pill '+cls; if(text){el.innerHTML=text; return;} el.innerHTML='<strong>Connected</strong>IKKIS KOT v3.2 ready'; el.className='status-pill ok'; }
+function diag(message,type=''){ const box=$('diag'); const line=document.createElement('div'); line.className='diag-line '+type; line.textContent='['+new Date().toLocaleTimeString()+'] '+message; box.appendChild(line); while(box.children.length>20) box.removeChild(box.firstChild); }
+function showDiag(){ $('diag').classList.add('visible'); }
+
+async function apiGet(action, params={}){ const url=new URL(getUrl()); url.searchParams.set('action',action); Object.entries(params).forEach(([k,v])=>url.searchParams.set(k, v==null?'':String(v))); diag('GET '+action+(Object.keys(params).length?' '+JSON.stringify(params):'')); const res=await fetch(url.toString(),{method:'GET',redirect:'follow'}); const text=await res.text(); let json; try{json=JSON.parse(text)}catch(e){throw new Error('Apps Script returned non-JSON. Check Web App access/deployment.')} if(json.error) throw new Error(json.error); diag('OK '+action,'ok'); return json; }
+async function testConnection(){ showDiag(); try{ saveUrl(); const data=await apiGet('ping'); updateConnectionStatus('<strong>Connected</strong>IKKIS KOT v3.2 online','ok'); toast('Connection successful.','ok'); await loadCafes(false); }catch(err){ updateConnectionStatus('<strong>Connection issue</strong>'+err.message.slice(0,60),'err'); toast(err.message,'err'); } }
+
+function selectSource(code){
+  state.source=code;
+  state.b2bLimitAction='';
+  ['S','W','B','D'].forEach(c=>{ const el=$('source'+c); if(el) el.classList.toggle('active',c===code); });
+
+  $('b2bPanel').classList.toggle('visible',code==='B');
+  if ($('invoicePanel')) $('invoicePanel').classList.toggle('visible', code==='W');
+  if ($('documentOnlyPanel')) $('documentOnlyPanel').classList.toggle('visible', code==='D');
+  if ($('shopifyPanel')) $('shopifyPanel').classList.toggle('visible', code==='S');
+  $('formCard').classList.toggle('is-b2b',code==='B');
+
+  if(code==='B') $('customerLabel').innerHTML='Café Name <span class="req">*</span>';
+  else if(code==='D') $('customerLabel').innerHTML='Party / Customer Name <span class="req">*</span>';
+  else $('customerLabel').innerHTML='Customer Name <span class="req">*</span>';
+
+  if(code==='B'&&!state.cafes.length) loadCafes(false);
+
+  if(code==='B'){
+    state.items.forEach(item=>{ if(!item.bagSize || item.bagSize==='250g') item.bagSize='1kg'; });
+    renderItems();
+  } else {
+    resetShipping();
+  }
+
+  state.orderNo=null;
+  state.orderId='—';
+  updatePreview();
+}
+function sourceFull(){ if(state.source==='S') return 'S — Shopify B2C'; if(state.source==='W') return 'W — WhatsApp / Phone B2C'; if(state.source==='B') return 'B — B2B Wholesale'; if(state.source==='D') return 'D — Document Only / Non-KOT Sale'; return '—'; }
+async function ensureOrderId(){ if(state.orderNo) return makeOrderId(); try{ const data=await apiGet('nextOrderNum'); state.orderNo=data.next||fallbackOrderNo(); }catch(e){ state.orderNo=fallbackOrderNo(); toast('Using fallback ID.','warn'); } return makeOrderId(); }
+function fallbackOrderNo(){ const d=new Date(); return String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+String(d.getSeconds()).padStart(2,'0'); }
+function makeOrderId(){ const d=new Date(),p=n=>String(n).padStart(2,'0'); const date=String(d.getFullYear()).slice(2)+p(d.getMonth()+1)+p(d.getDate()); return `${state.source||'X'}-${date}-${state.orderNo||'---'}`; }
+
+async function loadCafes(showToast=true){ try{ const data=await apiGet('getCafes'); state.cafes=Array.isArray(data.cafes)?data.cafes:[]; localStorage.setItem('IKKIS_KOT_V2_CAFES',JSON.stringify(state.cafes)); renderCafeOptions(); if(showToast) toast(`Loaded ${state.cafes.length} cafés.`,'ok'); }catch(err){ renderCafeOptions(); if(showToast) toast('Could not load cafés: '+err.message,'err'); } }
+function renderCafeOptions(){ const sel=$('cafeSelect'); const current=sel.value; if(!state.cafes.length){ sel.innerHTML='<option value="">No cafés loaded — click Load Cafés</option>'; return; } const sorted=[...state.cafes].sort((a,b)=>(a.name||'').localeCompare(b.name||'')); sel.innerHTML='<option value="">Select café…</option>'+sorted.map(c=>`<option value="${escapeHtml(c.name)}" ${c.name===current?'selected':''}>${escapeHtml(c.name)}${c.city?' · '+escapeHtml(c.city):''}</option>`).join(''); }
+async function onCafeSelected(){ const name=$('cafeSelect').value; state.selectedCafe=state.cafes.find(c=>c.name===name)||null; $('manualCafeName').value=''; clearOrderHistoryView(); if(name){ $('customerName').value=name; if(state.selectedCafe){ $('city').value=state.selectedCafe.city||$('city').value; $('phone').value=state.selectedCafe.phone||$('phone').value; } await Promise.all([loadCafePricing(name), loadCredit(false)]); } else {state.cafePricing={}; state.credit=null; renderItems(); updateCreditBox();} updatePreview(); }
+function onManualCafeInput(){ const name=$('manualCafeName').value.trim(); clearOrderHistoryView(); if(name){ $('cafeSelect').value=''; $('customerName').value=name; state.selectedCafe=null; state.cafePricing={}; renderItems(); } updatePreview(); }
+function currentCafeName(){ return state.source==='B' ? ($('cafeSelect').value || $('manualCafeName').value.trim() || $('customerName').value.trim()) : ''; }
+async function loadCafePricing(name){ try{ const data=await apiGet('getPricing',{cafe:name}); state.cafePricing=data.pricing||{}; autoFillItemPrices(); renderItems(); }catch(e){ state.cafePricing={}; } }
+async function loadCredit(showToast=true){ const name=currentCafeName(); if(!name) return showToast&&toast('Select a café first.','warn'); try{ const data=await apiGet('getCredit',{cafe:name}); state.credit=data; updateCreditBox(); if(showToast) toast('Credit refreshed.','ok'); }catch(err){ state.credit=null; updateCreditBox(); if(showToast) toast('Credit not found.','warn'); } }
+function toggleAddCafe(){ const panel=$('addCafePanel'); const paymentPanel=$('paymentPanel'); if(paymentPanel) paymentPanel.classList.remove('visible'); const adjustmentPanel=$('adjustmentPanel'); if(adjustmentPanel) adjustmentPanel.classList.remove('visible'); const historyPanel=$('orderHistoryPanel'); if(historyPanel) historyPanel.classList.remove('visible'); panel.classList.toggle('visible'); if(panel.classList.contains('visible')){ const manual=$('manualCafeName').value.trim(); if(manual&&!$('newCafeName').value) $('newCafeName').value=manual; } }
+async function submitNewCafe(){ const name=$('newCafeName').value.trim(); if(!name) return toast('New café name required.','err'); try{ const data=await apiGet('addCafe',{name, gstEntity:$('newGstEntity').value.trim(), city:$('newCafeCity').value.trim(), phone:$('newCafePhone').value.trim(), creditLimit:$('newCreditLimit').value||75000, openingBalance:$('newOpeningBalance').value||0, hasGst:$('newHasGst').value, gstState:$('newGstState').value.trim(), shipping:'Yes'}); toast(`Café "${name}" created.`,'ok'); $('addCafePanel').classList.remove('visible'); await loadCafes(false); $('cafeSelect').value=name; await onCafeSelected(); }catch(err){ toast('Could not create café: '+err.message,'err'); } }
+
+
+function closeB2BUtilityPanels(exceptId){
+  ['addCafePanel','paymentPanel','adjustmentPanel','orderHistoryPanel'].forEach(id=>{
+    if(id!==exceptId && $(id)) $(id).classList.remove('visible');
+  });
+}
+
+function clearOrderHistoryView(){
+  state.orderHistory=[];
+  const list=$('orderHistoryList');
+  if(list) list.innerHTML='<div class="history-empty">Select a café and click Refresh History.</div>';
+}
+
+function toggleOrderHistoryPanel(){
+  if(!currentCafeName()) return toast('Select a café first.','warn');
+  closeB2BUtilityPanels('orderHistoryPanel');
+  const panel=$('orderHistoryPanel');
+  panel.classList.toggle('visible');
+  if(panel.classList.contains('visible')) loadCafeOrderHistory(false);
+}
+
+async function repeatLastCafeOrder(){
+  if(!currentCafeName()) return toast('Select a café first.','warn');
+  try{
+    const data=await apiGet('getCafeOrderHistory',{cafe:currentCafeName(),limit:1});
+    const order=(data.orders||[])[0];
+    if(!order) return toast('No previous order found for this café.','warn');
+    applyHistoryOrder(order);
+  }catch(err){
+    toast('Could not repeat last order: '+err.message,'err');
+  }
+}
+
+async function loadCafeOrderHistory(showToast=true){
+  if(!currentCafeName()) return toast('Select a café first.','warn');
+  const list=$('orderHistoryList');
+  if(list) list.innerHTML='<div class="history-empty"><span class="spinner spinner-dark"></span>Loading history…</div>';
+  try{
+    const data=await apiGet('getCafeOrderHistory',{cafe:currentCafeName(),limit:10});
+    state.orderHistory=Array.isArray(data.orders)?data.orders:[];
+    renderOrderHistoryList();
+    if(showToast) toast(`Loaded ${state.orderHistory.length} previous orders.`,'ok');
+  }catch(err){
+    if(list) list.innerHTML='<div class="history-empty">History failed: '+escapeHtml(err.message)+'</div>';
+    if(showToast) toast('History failed: '+err.message,'err');
+  }
+}
+
+function renderOrderHistoryList(){
+  const list=$('orderHistoryList');
+  if(!list) return;
+  if(!state.orderHistory.length){
+    list.innerHTML='<div class="history-empty">No previous B2B orders found for this café.</div>';
+    return;
+  }
+  list.innerHTML=state.orderHistory.map((order,index)=>{
+    const itemText=(order.items||[]).slice(0,3).map(item=>`${escapeHtml(item.product)} ${escapeHtml(item.bagSize)} × ${escapeHtml(item.qty)}`).join(' · ');
+    const more=(order.items||[]).length>3?` +${(order.items||[]).length-3} more`:'';
+    const ship=order.shippingApplied?` · Shipping Rs ${formatINR(order.shippingCharge)}`:'';
+    return `<div class="history-item" onclick="applyHistoryOrderByIndex(${index})">
+      <div class="h-main">${escapeHtml(order.saleOrderNumber||order.refNumber||order.orderId||'Previous order')} · ${escapeHtml(order.displayDate||'')}</div>
+      <div class="h-meta">${itemText}${more}${ship}</div>
+    </div>`;
+  }).join('');
+}
+
+function applyHistoryOrderByIndex(index){
+  const order=state.orderHistory[index];
+  if(order) applyHistoryOrder(order);
+}
+
+function applyHistoryOrder(order){
+  const items=(order.items||[]).map(item=>{
+    const currentPrice=lookupCafePrice(item.product);
+    return {
+      id:Date.now()+Math.random(),
+      product:item.product||'',
+      bagSize:item.bagSize||defaultBagSize(),
+      qty:Number(item.qty)||1,
+      grind:item.grind||'Whole Beans',
+      notes:item.notes||'',
+      pricePerKg:currentPrice||Number(item.pricePerKg)||'',
+      priceAutoFilled:!!currentPrice
+    };
+  }).filter(item=>item.product);
+
+  if(!items.length) return toast('This history order has no reusable coffee items.','warn');
+
+  state.items=items;
+  state.orderNo=null;
+  state.orderId='—';
+
+  if(order.shippingApplied){
+    state.shippingEnabled=true;
+    state.shippingCharge=Number(order.shippingCharge)||0;
+    if($('shippingCharge')){ $('shippingCharge').disabled=false; $('shippingCharge').value=state.shippingCharge; }
+    if($('shippingToggle')) $('shippingToggle').classList.add('active');
+    if($('shippingCheck')) $('shippingCheck').textContent='✓';
+  } else {
+    resetShipping();
+  }
+
+  // Never copy old dispatch date/document numbers. Keep today's selected date if already chosen.
+  if(!$('dispatchDate').value){
+    $('dispatchDate').value=new Date().toISOString().slice(0,10);
+  }
+
+  renderItems();
+  updatePreview();
+  closeB2BUtilityPanels('');
+  toast('Previous order copied. Review dispatch date, qty, and rates before submitting.','ok');
+}
+
+function togglePaymentPanel() {
+  const panel = $('paymentPanel');
+
+  if (!currentCafeName()) {
+    return toast('Select a café first.', 'warn');
+  }
+
+  // Close add-café panel if open, so staff does not mix account creation and payment entry.
+  closeB2BUtilityPanels('paymentPanel');
+
+  panel.classList.toggle('visible');
+
+  if (panel.classList.contains('visible')) {
+    setTimeout(() => {
+      const amountField = $('paymentAmount');
+      if (amountField) amountField.focus();
+    }, 80);
+  }
+}
+
+async function submitCafePayment() {
+  const cafe = currentCafeName();
+  const amount = Number($('paymentAmount').value || 0);
+  const mode = $('paymentMode').value;
+  const reference = $('paymentReference').value.trim();
+  const notes = $('paymentNotes').value.trim();
+  const btn = $('savePaymentBtn');
+
+  if (!cafe) return toast('Select a café first.', 'err');
+  if (!amount || amount <= 0) return toast('Enter payment amount.', 'err');
+
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Saving';
+    }
+
+    const data = await apiGet('recordPayment', {
+      cafe,
+      amount,
+      mode,
+      reference,
+      notes
+    });
+
+    if (data.error) throw new Error(data.error);
+
+    toast(`Payment saved: Rs ${formatINR(amount)} from ${cafe}`, 'ok');
+
+    $('paymentAmount').value = '';
+    $('paymentReference').value = '';
+    $('paymentNotes').value = '';
+    $('paymentPanel').classList.remove('visible');
+
+    await loadCredit(true);
+  } catch (err) {
+    toast('Payment not saved: ' + err.message, 'err');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Save Payment';
+    }
+  }
+}
+
+function toggleAdjustmentPanel() {
+  const panel = $('adjustmentPanel');
+  if (!currentCafeName()) return toast('Select a café first.', 'warn');
+
+  closeB2BUtilityPanels('adjustmentPanel');
+
+  panel.classList.toggle('visible');
+  if (panel.classList.contains('visible')) {
+    setTimeout(() => { if($('adjustAmount')) $('adjustAmount').focus(); }, 80);
+  }
+}
+
+async function submitLedgerAdjustment() {
+  const cafe = currentCafeName();
+  const direction = $('adjustDirection').value;
+  const amount = Number($('adjustAmount').value || 0);
+  const reference = $('adjustReference').value.trim();
+  const notes = $('adjustNotes').value.trim();
+  const btn = $('saveAdjustBtn');
+
+  if (!cafe) return toast('Select a café first.', 'err');
+  if (!amount || amount <= 0) return toast('Enter adjustment amount.', 'err');
+  if (!notes) return toast('Adjustment reason is required.', 'err');
+
+  try {
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Saving'; }
+    const data = await apiGet('recordAdjustment', {
+      party: cafe,
+      partyType: 'Cafe',
+      direction,
+      amount,
+      reference,
+      notes
+    });
+    if (data.error) throw new Error(data.error);
+    toast(`Ledger adjusted for ${cafe}.`, 'ok');
+    $('adjustAmount').value = '';
+    $('adjustReference').value = '';
+    $('adjustNotes').value = '';
+    $('adjustmentPanel').classList.remove('visible');
+    await loadCredit(true);
+  } catch (err) {
+    toast('Adjustment not saved: ' + err.message, 'err');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Save Adjustment'; }
+  }
+}
+
+function defaultBagSize(){ return state.source==='B' ? '1kg' : '250g'; }
+function addItem(){ state.items.push({id:Date.now()+Math.random(), product:'', bagSize:defaultBagSize(), qty:1, grind:'Whole Beans', notes:'', pricePerKg:'', priceAutoFilled:false}); renderItems(); updatePreview(); }
+function removeItem(id){ state.items=state.items.filter(i=>String(i.id)!==String(id)); renderItems(); updatePreview(); }
+function setItem(id,key,value){ const item=state.items.find(i=>String(i.id)===String(id)); if(!item) return; item[key]=value; if(key==='product'&&state.source==='B'){ const price=lookupCafePrice(value); if(price){ item.pricePerKg=price; item.priceAutoFilled=true; } else { item.pricePerKg=''; item.priceAutoFilled=false; toast('No saved rate found for '+value+' at this café. Enter Rate/Kg manually.','warn'); } } if(key==='pricePerKg') item.priceAutoFilled=false; renderItems(); updatePreview(); }
+function setItemLive(id,key,value){ const item=state.items.find(i=>String(i.id)===String(id)); if(!item) return; item[key]=value; if(key==='pricePerKg') item.priceAutoFilled=false; updatePreview(); }
+function autoFillItemPrices(){ state.items.forEach(item=>{ const price=lookupCafePrice(item.product); if(price){ item.pricePerKg=price; item.priceAutoFilled=true; } }); }
+function lookupCafePrice(product){ if(!product || !state.cafePricing) return 0; if(state.cafePricing[product] && Number(state.cafePricing[product].price)) return Number(state.cafePricing[product].price); const wanted=normalizeKey(product); const matchKey=Object.keys(state.cafePricing).find(k=>normalizeKey(k)===wanted); if(matchKey && Number(state.cafePricing[matchKey].price)) return Number(state.cafePricing[matchKey].price); return 0; }
+function normalizeKey(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+function normalizeShopifyOrderNumberJS(value){
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (raw.charAt(0) === '#') return raw;
+  if (/^\d+$/.test(raw)) return '#' + raw;
+  return raw;
+}
+function pricePlaceholder(item){ if(state.source!=='B') return ''; if(!currentCafeName()) return 'Select café first'; if(!item.product) return 'Select product first'; if(lookupCafePrice(item.product)) return 'Auto from café pricing'; return 'No saved rate — enter manually'; }
+function productOptions(selected){ const fromPricing=Object.keys(state.cafePricing||{}); const products=Array.from(new Set([...fromPricing,...DEFAULT_PRODUCTS])); return '<option value="">Select product…</option>'+products.map(p=>`<option value="${escapeHtml(p)}" ${p===selected?'selected':''}>${escapeHtml(p)}</option>`).join(''); }
+function renderItems(){ $('items').innerHTML=state.items.map((item,index)=>`<div class="item"><div class="item-head"><div class="item-title">Item ${index+1}</div><button class="remove" onclick="removeItem('${item.id}')" type="button">Remove</button></div><div class="item-grid"><div class="field"><label>Product <span class="req">*</span></label><select onchange="setItem('${item.id}','product',this.value)">${productOptions(item.product)}</select></div><div class="field"><label>Bag Size <span class="req">*</span></label><select onchange="setItem('${item.id}','bagSize',this.value)">${BAG_SIZES.map(b=>`<option value="${b}" ${b===item.bagSize?'selected':''}>${b}</option>`).join('')}</select></div><div class="field"><label>Qty <span class="req">*</span></label><input type="number" min="1" value="${item.qty}" oninput="setItemLive('${item.id}','qty',this.value)" onchange="setItemLive('${item.id}','qty',this.value)" /></div></div><div class="item-grid-3"><div class="field"><label>Grind</label><select onchange="setItem('${item.id}','grind',this.value)">${GRINDS.map(g=>`<option value="${g}" ${g===item.grind?'selected':''}>${g}</option>`).join('')}</select></div><div class="field price-field"><label>Rate / Kg <span class="req">*</span>${item.priceAutoFilled?'<span class="price-auto-tag">auto</span>':''}</label><input type="number" min="0" value="${item.pricePerKg||''}" placeholder="${pricePlaceholder(item)}" oninput="setItemLive('${item.id}','pricePerKg',this.value)" onchange="setItemLive('${item.id}','pricePerKg',this.value)" /><div class="hint">Used only for B2B credit amount.</div></div><div class="field"><label>Notes</label><input value="${escapeAttr(item.notes)}" placeholder="Optional" onchange="setItem('${item.id}','notes',this.value)" /></div></div></div>`).join(''); }
+
+function showCitySuggestions(input, boxId){ const box=$(boxId); const q=input.value.trim().toLowerCase(); if(!q){ box.classList.remove('open'); return; } const matches=INDIAN_CITIES.filter(c=>c.toLowerCase().startsWith(q)).slice(0,8); if(!matches.length){ box.classList.remove('open'); return; } box.innerHTML=matches.map(c=>`<div class="suggestion-item" onmousedown="selectCity('${boxId}','${escapeAttr(c)}')">${escapeHtml(c)}</div>`).join(''); box.classList.add('open'); }
+function selectCity(boxId, city){ const input = boxId==='citySuggest' ? $('city') : $('newCafeCity'); input.value=city; $(boxId).classList.remove('open'); updatePreview(); }
+function closeAllSuggestions(){ document.querySelectorAll('.suggestions').forEach(s=>s.classList.remove('open')); }
+function toggleUrgent(){ state.urgent=!state.urgent; $('urgentBtn').classList.toggle('active',state.urgent); $('urgentCheck').textContent=state.urgent?'✓':''; }
+function toggleShipping(){ state.shippingEnabled=!state.shippingEnabled; const input=$('shippingCharge'); $('shippingToggle').classList.toggle('active',state.shippingEnabled); $('shippingCheck').textContent=state.shippingEnabled?'✓':''; if(input){ input.disabled=!state.shippingEnabled; if(!state.shippingEnabled){ input.value='0'; state.shippingCharge=0; } else { input.value=input.value || '0'; setTimeout(()=>input.focus(),80); } } updatePreview(); }
+function updateShippingCharge(){ const input=$('shippingCharge'); state.shippingCharge=Math.max(0,Number((input&&input.value)||0)||0); updatePreview(); }
+function currentShippingCharge(){ if(state.source!=='B' || !state.shippingEnabled) return 0; return Math.max(0,Number((($('shippingCharge')||{}).value)||state.shippingCharge||0)||0); }
+function resetShipping(){ state.shippingEnabled=false; state.shippingCharge=0; const input=$('shippingCharge'); if(input){ input.value='0'; input.disabled=true; } const toggle=$('shippingToggle'); if(toggle) toggle.classList.remove('active'); const check=$('shippingCheck'); if(check) check.textContent=''; }
+
+function setB2BLimitAction(action){
+  state.b2bLimitAction = action === 'EWAY_BILL' ? 'EWAY_BILL' : (action === 'SPLIT' ? 'SPLIT' : '');
+  updateB2BLimitControl();
+}
+
+function resetB2BLimitAction(){
+  state.b2bLimitAction='';
+  ['splitKotChoice','ewayBillChoice'].forEach(id=>{ const el=$(id); if(el) el.classList.remove('active'); });
+  const selection=$('b2bLimitSelection');
+  if(selection){ selection.className='b2b-limit-selection'; selection.textContent=''; }
+}
+
+function updateB2BLimitControl(){
+  const box=$('b2bLimitBox');
+  const value=$('b2bLimitValue');
+  const badge=$('b2bLimitBadge');
+  const progress=$('b2bLimitProgress');
+  const message=$('b2bLimitMessage');
+  const options=$('b2bOverOptions');
+  const selection=$('b2bLimitSelection');
+  const split=$('splitKotChoice');
+  const eway=$('ewayBillChoice');
+  const submit=$('submitBtn');
+
+  if(!box || !value || !badge || !progress || !message || !options) return;
+
+  if(state.source!=='B'){
+    resetB2BLimitAction();
+    box.classList.remove('over');
+    options.classList.remove('visible');
+    value.textContent='Rs 0 / Rs '+formatINR(B2B_KOT_MAX_AMOUNT);
+    badge.textContent='Within Limit';
+    badge.className='b2b-limit-badge';
+    progress.style.width='0%';
+    message.textContent='Normal B2B KOT can be submitted up to Rs '+formatINR(B2B_KOT_MAX_AMOUNT)+' final amount, including shipping.';
+    if(submit) submit.disabled=false;
+    return;
+  }
+
+  const amount=totals().amount;
+  const over=amount>B2B_KOT_MAX_AMOUNT;
+  const pct=Math.min(100,(amount/B2B_KOT_MAX_AMOUNT)*100);
+  const requiredKots=Math.max(1,Math.ceil(amount/B2B_KOT_MAX_AMOUNT));
+  const exceededBy=Math.max(0,amount-B2B_KOT_MAX_AMOUNT);
+
+  value.textContent='Rs '+formatINR(amount)+' / Rs '+formatINR(B2B_KOT_MAX_AMOUNT);
+  progress.style.width=pct+'%';
+  box.classList.toggle('over',over);
+  badge.classList.toggle('over',over);
+  options.classList.toggle('visible',over);
+
+  if(!over){
+    resetB2BLimitAction();
+    badge.textContent='Within Limit';
+    message.textContent='Rs '+formatINR(B2B_KOT_MAX_AMOUNT-amount)+' available in this KOT. Final amount includes shipping.';
+    if(submit) submit.disabled=false;
+    return;
+  }
+
+  badge.textContent='Limit Exceeded';
+  message.textContent='This ticket is Rs '+formatINR(exceededBy)+' above the normal KOT limit and requires at least '+requiredKots+' KOTs unless E-Way Bill is selected.';
+
+  if(split) split.classList.toggle('active',state.b2bLimitAction==='SPLIT');
+  if(eway) eway.classList.toggle('active',state.b2bLimitAction==='EWAY_BILL');
+
+  if(state.b2bLimitAction==='SPLIT'){
+    if(selection){
+      selection.className='b2b-limit-selection visible split';
+      selection.textContent='Split selected · Reduce this current KOT to Rs '+formatINR(B2B_KOT_MAX_AMOUNT)+' or below, then create the next KOT separately.';
+    }
+    if(submit) submit.disabled=true;
+  } else if(state.b2bLimitAction==='EWAY_BILL'){
+    if(selection){
+      selection.className='b2b-limit-selection visible eway';
+      selection.textContent='E-Way Bill selected · Full KOT allowed. It will be marked REQUIRED · PENDING and should not be dispatched until the E-Way Bill number is recorded.';
+    }
+    if(submit) submit.disabled=false;
+  } else {
+    if(selection){ selection.className='b2b-limit-selection'; selection.textContent=''; }
+    if(submit) submit.disabled=true;
+  }
+}
+
+function totals(){ let bags=0,kg=0,coffeeAmount=0; state.items.forEach(item=>{ const qty=Number(item.qty)||0; const itemKg=bagKg(item.bagSize)*qty; const price=Number(item.pricePerKg)||0; bags+=qty; kg+=itemKg; coffeeAmount+=itemKg*price; }); const shippingCharge=currentShippingCharge(); return {lines:state.items.length,bags,kg,coffeeAmount,shippingCharge,amount:coffeeAmount+shippingCharge}; }
+function updatePreview(){ if(state.orderNo) state.orderId=makeOrderId(); $('orderId').textContent=state.orderId; $('summaryOrderId').textContent=state.orderId; $('summarySource').textContent=sourceFull(); const t=totals(); $('sumLines').textContent=t.lines; $('sumBags').textContent=t.bags; $('sumKg').textContent=t.kg.toFixed(2); $('sumAmount').textContent='Rs '+formatINR(t.amount); updateCreditBox(); updateB2BLimitControl(); }
+function updateCreditBox(){ const t=totals(); if(state.source!=='B'){ $('creditStatus').textContent='B2B credit appears here after selecting a café.'; $('creditStatus').className='credit-status'; ['creditLimit','creditOutstanding','creditRemaining','creditAfter'].forEach(id=>$(id).textContent='—'); return; } const c=state.credit; if(!c){ $('creditStatus').textContent='Select café and refresh credit.'; $('creditStatus').className='credit-status yellow'; ['creditLimit','creditOutstanding','creditRemaining','creditAfter'].forEach(id=>$(id).textContent='—'); return; } const afterOutstanding=Number(c.outstanding||0)+t.amount; const remainingAfter=Number(c.limit||0)-afterOutstanding; const status=creditStatus(afterOutstanding,Number(c.limit||75000)); const shipText=t.shippingCharge?` · shipping Rs ${formatINR(t.shippingCharge)}`:''; $('creditLimit').textContent='Rs '+formatINR(c.limit); $('creditOutstanding').textContent='Rs '+formatINR(c.outstanding); $('creditRemaining').textContent='Rs '+formatINR(c.remaining); $('creditAfter').textContent='Rs '+formatINR(remainingAfter); $('creditStatus').textContent=`${status.emoji} ${status.label} after this order · outstanding Rs ${formatINR(afterOutstanding)}${shipText}`; $('creditStatus').className='credit-status '+status.className; }
+function creditStatus(outstanding,limit){
+  if(outstanding>limit) return {label:'BLOCKED — credit exceeded',emoji:'⛔',className:'red'};
+  if(outstanding>=50000) return {label:'RED — collect payment before dispatch',emoji:'🔴',className:'red'};
+  if(outstanding>=30000) return {label:'YELLOW — payment follow-up recommended',emoji:'🟡',className:'yellow'};
+  return {label:'GREEN — healthy',emoji:'🟢',className:'green'};
+}
+
+function validate(){
+  if(!state.source) return toast('Select source: S, W, B, or D.','err'),false;
+
+  if(state.source==='D') return validateDocumentOnly();
+
+  const name=$('customerName').value.trim();
+  if(!name) return toast(state.source==='B'?'Select or enter café name.':'Customer name required.','err'),false;
+  if(state.source==='S' && !normalizeShopifyOrderNumberJS(($('shopifyOrderNumber')||{}).value)) return toast('Shopify Order # is required for manual Shopify backup.','err'),false;
+  if(state.source==='B'&&!currentCafeName()) return toast('B2B café name required.','err'),false;
+  if(state.source==='B'&&state.shippingEnabled&&currentShippingCharge()<0) return toast('Shipping charge cannot be negative.','err'),false;
+  if(state.source==='W' && ($('invoiceRequired')||{}).value==='Yes' && !(Number(($('invoiceAmount')||{}).value)||0)) return toast('Invoice amount required for WhatsApp invoice.','err'),false;
+  if(!$('dispatchDate').value) return toast('Dispatch date required.','err'),false;
+  if(!state.items.length) return toast('Add at least one item.','err'),false;
+  for(let i=0;i<state.items.length;i++){
+    const item=state.items[i];
+    if(!item.product) return toast(`Item ${i+1}: product required.`,'err'),false;
+    if(!item.bagSize) return toast(`Item ${i+1}: bag size required.`,'err'),false;
+    if(!Number(item.qty)) return toast(`Item ${i+1}: quantity required.`,'err'),false;
+    if(state.source==='B'&&!Number(item.pricePerKg)) return toast(`Item ${i+1}: B2B rate/kg required.`,'err'),false;
+  }
+
+  if(state.source==='B'){
+    const t=totals();
+    if(t.amount>B2B_KOT_MAX_AMOUNT){
+      const required=Math.ceil(t.amount/B2B_KOT_MAX_AMOUNT);
+      if(!state.b2bLimitAction){
+        return toast(`Order is Rs ${formatINR(t.amount)}. Choose Split KOTs or E-Way Bill.`,'err'),false;
+      }
+      if(state.b2bLimitAction==='SPLIT'){
+        return toast(`Split selected. Reduce this KOT to Rs ${formatINR(B2B_KOT_MAX_AMOUNT)} or below. At least ${required} KOTs are required.`,'warn'),false;
+      }
+      if(state.b2bLimitAction!=='EWAY_BILL'){
+        return toast('Choose how this over-limit B2B order will be processed.','err'),false;
+      }
+    }
+  }
+
+  return true;
+}
+function buildPayload(){
+  const isB2B=state.source==='B';
+  const cafeName=isB2B?currentCafeName():'';
+  const t=totals();
+  const shopifyOrderNumber = state.source==='S' ? normalizeShopifyOrderNumberJS(($('shopifyOrderNumber')||{}).value) : '';
+  const invoiceRequired = state.source==='W' && ($('invoiceRequired')||{}).value==='Yes';
+
+  return {
+    orderId:state.orderId,
+    source:state.source,
+    sourceFull:sourceFull(),
+    shopifyOrderNumber,
+    refNumber: shopifyOrderNumber,
+    customerName:isB2B?cafeName:$('customerName').value.trim(),
+    cafeName,
+    city:$('city').value.trim(),
+    phone:$('phone').value.trim(),
+    dispatchDate:$('dispatchDate').value,
+    urgent:state.urgent,
+    shippingApplied:isB2B&&state.shippingEnabled,
+    shippingCharge:isB2B?t.shippingCharge:0,
+    coffeeAmount:isB2B?t.coffeeAmount:0,
+    b2bAmount:isB2B?t.amount:0,
+    b2bLimitAction:isB2B?state.b2bLimitAction:'',
+    ewayBillRequired:isB2B&&state.b2bLimitAction==='EWAY_BILL',
+    ewayBillNumber:'',
+    invoiceRequired: invoiceRequired,
+    createInvoice: invoiceRequired,
+    invoiceGstRoute: invoiceRequired ? ($('invoiceGstRoute').value || 'Punjab') : '',
+    b2cInvoiceAmount: invoiceRequired ? Number($('invoiceAmount').value || 0) : 0,
+    invoicePaymentStatus: invoiceRequired ? $('invoicePaymentStatus').value : '',
+    invoiceNotes: invoiceRequired ? $('invoiceNotes').value.trim() : '',
+    documentType: invoiceRequired ? 'WhatsApp Retail Order' : '',
+    submittedAt:new Date().toISOString(),
+    items:state.items.map(item=>({
+      product:item.product,
+      bagSize:item.bagSize,
+      qty:Number(item.qty),
+      grind:item.grind||'Whole Beans',
+      notes:item.notes||'',
+      pricePerKg:Number(item.pricePerKg)||0
+    }))
+  };
+}
+function validateDocumentOnly(){
+  const party=$('customerName').value.trim();
+  const amount=Number(($('docOnlyAmount')||{}).value || 0);
+  if(!party) return toast('Party / customer name required for document-only sale.','err'),false;
+  if(!amount || amount<=0) return toast('Document amount required.','err'),false;
+  return true;
+}
+
+async function submitDocumentOnly(){
+  const btn=$('submitBtn');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>Recording';
+  try{
+    const data = await apiGet('documentOnly', {
+      party: $('customerName').value.trim(),
+      partyType: $('docOnlyPartyType').value,
+      documentType: $('docOnlyType').value,
+      gstRoute: $('docOnlyGstRoute').value,
+      amount: $('docOnlyAmount').value,
+      paymentStatus: $('docOnlyPaymentStatus').value,
+      reference: $('docOnlyReference').value.trim(),
+      notes: $('docOnlyNotes').value.trim()
+    });
+    toast(`Document recorded: ${data.invoiceNumber || data.documentId}. No KOT created.`, 'ok');
+    setTimeout(resetForm,900);
+  }catch(err){
+    toast('Document-only sale failed: '+err.message,'err');
+  }finally{
+    btn.disabled=false;
+    btn.textContent='Generate Order Slip';
+  }
+}
+
+async function submitOrder(){
+  if(!validate()) return;
+  if(state.source==='D') return submitDocumentOnly();
+
+  const btn=$('submitBtn');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>Submitting';
+  try{
+    await ensureOrderId();
+    const payload=buildPayload();
+    await fetch(getUrl(),{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+    toast(`Order ${payload.orderId} submitted. PDF will print shortly.`,'ok');
+    setTimeout(resetForm,1100);
+  }catch(err){
+    toast('Submission failed: '+err.message,'err');
+  } finally{
+    btn.disabled=false;
+    btn.textContent='Generate Order Slip';
+  }
+}
+function resetForm(){
+  state.source=''; state.orderNo=null; state.orderId='—'; state.selectedCafe=null; state.credit=null; state.cafePricing={}; state.urgent=false; state.b2bLimitAction=''; state.items=[];
+  ['S','W','B','D'].forEach(c=>{ const el=$('source'+c); if(el) el.classList.remove('active'); });
+  $('b2bPanel').classList.remove('visible');
+  if($('invoicePanel')) $('invoicePanel').classList.remove('visible');
+  if($('documentOnlyPanel')) $('documentOnlyPanel').classList.remove('visible');
+  if($('shopifyPanel')) $('shopifyPanel').classList.remove('visible');
+  $('formCard').classList.remove('is-b2b');
+  ['customerName','city','phone','manualCafeName','shopifyOrderNumber','invoiceAmount','invoiceNotes','docOnlyAmount','docOnlyReference','docOnlyNotes'].forEach(id=>{ if($(id)) $(id).value=''; });
+  if($('invoiceRequired')) $('invoiceRequired').value='No';
+  if($('invoiceGstRoute')) $('invoiceGstRoute').value='Punjab';
+  if($('invoicePaymentStatus')) $('invoicePaymentStatus').value='Paid';
+  if($('docOnlyType')) $('docOnlyType').value='Machine Sale';
+  if($('docOnlyGstRoute')) $('docOnlyGstRoute').value='Punjab';
+  if($('docOnlyPartyType')) $('docOnlyPartyType').value='Customer';
+  if($('docOnlyPaymentStatus')) $('docOnlyPaymentStatus').value='Unpaid';
+  if($('adjustDirection')) $('adjustDirection').value='credit';
+  $('cafeSelect').value=''; $('dispatchDate').value=''; $('urgentBtn').classList.remove('active'); $('urgentCheck').textContent='';
+  resetShipping(); $('addCafePanel').classList.remove('visible'); if($('paymentPanel')) $('paymentPanel').classList.remove('visible'); if($('adjustmentPanel')) $('adjustmentPanel').classList.remove('visible'); if($('orderHistoryPanel')) $('orderHistoryPanel').classList.remove('visible');
+  ['paymentAmount','paymentReference','paymentNotes','adjustAmount','adjustReference','adjustNotes'].forEach(id=>{ if($(id)) $(id).value=''; });
+  clearOrderHistoryView();
+  resetB2BLimitAction();
+  addItem(); updatePreview();
+}
+
+function bagKg(size){ if(size==='250g') return .25; if(size==='500g') return .5; if(size==='1kg') return 1; const num=parseFloat(String(size).replace(/[^0-9.]/g,''))||0; return String(size).toLowerCase().includes('kg')?num:num/1000; }
+function formatINR(n){ return Math.round(Number(n)||0).toLocaleString('en-IN'); }
+function formatDateTime(d){ return new Intl.DateTimeFormat('en-IN',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(d); }
+function toast(msg,type=''){ const t=$('toast'); t.textContent=msg; t.className=`toast ${type} show`; setTimeout(()=>t.classList.remove('show'),4200); }
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+function escapeAttr(s){ return escapeHtml(s).replace(/`/g,'&#096;'); }
+
+
+// ──────────────────────────────────────────────────────────────
+// RECOVERY CENTER — v3.3
+// ──────────────────────────────────────────────────────────────
+
+function toggleRecoveryCenter(){
+  const panel=$('recoveryPanel');
+  panel.classList.toggle('visible');
+
+  if(panel.classList.contains('visible')){
+    const input=$('recoveryQuery');
+    setTimeout(()=>input&&input.focus(),80);
+
+    if(!state.recoveryOrders.length){
+      loadRecoveryOrders(false);
+    }
+  }
+}
+
+async function loadRecoveryOrders(useQuery=true){
+  const query=useQuery ? (($('recoveryQuery')||{}).value||'').trim() : '';
+  const list=$('recoveryList');
+  const searchBtn=$('recoverySearchBtn');
+  const recentBtn=$('recoveryRecentBtn');
+
+  if(list){
+    list.innerHTML='<div class="recovery-empty"><span class="spinner spinner-dark"></span>Loading saved records…</div>';
+  }
+
+  try{
+    if(searchBtn) searchBtn.disabled=true;
+    if(recentBtn) recentBtn.disabled=true;
+
+    const data=await apiGet('getRecoveryOrders',{
+      query,
+      limit:20
+    });
+
+    state.recoveryOrders=Array.isArray(data.orders)?data.orders:[];
+    renderRecoveryOrders();
+
+    if(useQuery && query){
+      toast(`Found ${state.recoveryOrders.length} saved record(s).`,'ok');
+    }
+  }catch(err){
+    state.recoveryOrders=[];
+    if(list){
+      list.innerHTML='<div class="recovery-empty">Recovery search failed: '+escapeHtml(err.message)+'</div>';
+    }
+    toast('Recovery search failed: '+err.message,'err');
+  }finally{
+    if(searchBtn) searchBtn.disabled=false;
+    if(recentBtn) recentBtn.disabled=false;
+  }
+}
+
+function renderRecoveryOrders(){
+  const list=$('recoveryList');
+  if(!list) return;
+
+  if(!state.recoveryOrders.length){
+    list.innerHTML='<div class="recovery-empty">No matching saved KOT or document found.</div>';
+    return;
+  }
+
+  list.innerHTML=state.recoveryOrders.map((r,index)=>{
+    const isDoc=r.recordType==='DOCUMENT';
+    const title=isDoc
+      ? (r.documentType||'Document Only')
+      : ((r.sourceFull||'KOT')+' · '+(r.recordId||''));
+
+    const party=isDoc
+      ? (r.partyName||'—')
+      : (r.cafeName||r.customerName||'—');
+
+    const ref=isDoc
+      ? [r.saleOrderNumber,r.invoiceNumber].filter(Boolean).join(' · ')
+      : [r.refNumber,r.invoiceNumber].filter(Boolean).join(' · ');
+
+    const date=isDoc
+      ? (r.createdAt ? formatRecoveryDate(r.createdAt) : '')
+      : (r.dispatchDate||'');
+
+    const extra=!isDoc && r.ewayStatus
+      ? ' · E-Way: '+escapeHtml(r.ewayStatus)
+      : '';
+
+    const typeLabel=isDoc ? 'Document Only' : 'Production KOT';
+
+    return `<div class="recovery-item">
+      <div class="recovery-head">
+        <div>
+          <div class="recovery-type">${escapeHtml(typeLabel)}</div>
+          <div class="recovery-id">${escapeHtml(title)}</div>
+        </div>
+        <div class="recovery-amount">Rs ${formatINR(r.amount||0)}</div>
+      </div>
+
+      <div class="recovery-meta">
+        ${escapeHtml(party)}
+        ${ref?' · '+escapeHtml(ref):''}
+        ${date?' · '+escapeHtml(date):''}
+        ${extra}
+      </div>
+
+      <div class="recovery-actions">
+        <button class="mini-btn primary" onclick="runRecoveryAction(${index},'notification',this)" type="button">
+          ${isDoc?'Re-send Accounts':'Push Notification'}
+        </button>
+
+        <button class="mini-btn" onclick="runRecoveryAction(${index},'slip',this)" type="button">
+          ${isDoc?'Print Recovery Summary':'Reprint KOT'}
+        </button>
+
+        <button class="mini-btn" onclick="runRecoveryAction(${index},'both',this)" type="button">
+          Push Both
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function formatRecoveryDate(value){
+  try{
+    const d=new Date(value);
+    if(!isNaN(d.getTime())) return formatDateTime(d);
+  }catch(_){}
+  return String(value||'');
+}
+
+async function runRecoveryAction(index,action,btn){
+  const record=state.recoveryOrders[index];
+  if(!record) return toast('Recovery record not found in the current list.','err');
+
+  const oldHtml=btn?btn.innerHTML:'';
+  const params={
+    recordType:record.recordType,
+    recordId:record.recordId
+  };
+
+  try{
+    if(btn){
+      btn.disabled=true;
+      btn.innerHTML='<span class="spinner"></span>Working';
+    }
+
+    if(action==='notification' || action==='both'){
+      const n=await apiGet('recoverNotification',params);
+      if(n.error) throw new Error(n.error);
+    }
+
+    if(action==='slip' || action==='both'){
+      const s=await apiGet('recoverSlip',params);
+      if(s.error) throw new Error(s.error);
+    }
+
+    if(action==='notification'){
+      toast('Saved notification re-pushed. No duplicate order created.','ok');
+    }else if(action==='slip'){
+      toast(record.recordType==='DOCUMENT'
+        ? 'Recovery summary pushed to print folder.'
+        : 'KOT slip pushed back to print folder.','ok');
+    }else{
+      toast('Notification + slip successfully re-pushed.','ok');
+    }
+
+  }catch(err){
+    toast('Recovery failed: '+err.message,'err');
+  }finally{
+    if(btn){
+      btn.disabled=false;
+      btn.innerHTML=oldHtml;
+    }
+  }
+}
+
+document.addEventListener('keydown',e=>{ if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){ e.preventDefault(); submitOrder(); } });
+</script>
+</body>
+</html>
